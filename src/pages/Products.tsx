@@ -1,3 +1,4 @@
+
 import { useState } from "react"
 import { ERPLayout } from "@/components/erp-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,7 +13,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Search, Plus, FileText, List } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Search, Plus, FileText, List, Pencil, Trash2 } from "lucide-react"
+import { ProductFormModal } from "@/components/products/ProductFormModal"
+import { toast } from "sonner"
 
 interface Product {
   id: string
@@ -28,8 +41,11 @@ interface Product {
 export default function Products() {
   const [searchTerm, setSearchTerm] = useState("")
   const [filterBrand, setFilterBrand] = useState("")
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [deleteProduct, setDeleteProduct] = useState<Product | null>(null)
   
-  const products: Product[] = [
+  const [products, setProducts] = useState<Product[]>([
     {
       id: "1",
       name: "iPhone 14 Pro 256GB",
@@ -80,7 +96,7 @@ export default function Products() {
       warranty: "12 meses",
       status: 'active'
     }
-  ]
+  ])
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -97,6 +113,48 @@ export default function Products() {
     return { label: "Normal", variant: "secondary" as const }
   }
 
+  const handleNewProduct = () => {
+    setEditingProduct(null)
+    setIsModalOpen(true)
+  }
+
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct(product)
+    setIsModalOpen(true)
+  }
+
+  const handleDeleteProduct = (product: Product) => {
+    setDeleteProduct(product)
+  }
+
+  const confirmDelete = () => {
+    if (deleteProduct) {
+      setProducts(prev => prev.filter(p => p.id !== deleteProduct.id))
+      toast.success("Produto excluído com sucesso!")
+      setDeleteProduct(null)
+    }
+  }
+
+  const handleSaveProduct = (productData: Omit<Product, 'id'> | Product) => {
+    if ('id' in productData) {
+      // Editing existing product
+      setProducts(prev => prev.map(p => 
+        p.id === productData.id ? productData : p
+      ))
+    } else {
+      // Adding new product
+      const newProduct: Product = {
+        ...productData,
+        id: Date.now().toString()
+      }
+      setProducts(prev => [...prev, newProduct])
+    }
+  }
+
+  const handleImport = () => {
+    toast.info("Funcionalidade de importação será implementada em breve")
+  }
+
   return (
     <ERPLayout>
       <div className="space-y-6">
@@ -109,11 +167,11 @@ export default function Products() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleImport}>
               <FileText className="h-4 w-4 mr-2" />
               Importar
             </Button>
-            <Button className="btn-primary">
+            <Button className="btn-primary" onClick={handleNewProduct}>
               <Plus className="h-4 w-4 mr-2" />
               Novo Produto
             </Button>
@@ -252,11 +310,20 @@ export default function Products() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Button variant="ghost" size="sm">
-                            Editar
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleEditProduct(product)}
+                          >
+                            <Pencil className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" className="text-destructive">
-                            Excluir
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleDeleteProduct(product)}
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
@@ -267,6 +334,33 @@ export default function Products() {
             </Table>
           </CardContent>
         </Card>
+
+        {/* Modal de Produto */}
+        <ProductFormModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          product={editingProduct}
+          onSave={handleSaveProduct}
+        />
+
+        {/* Dialog de Confirmação de Exclusão */}
+        <AlertDialog open={!!deleteProduct} onOpenChange={() => setDeleteProduct(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir o produto "{deleteProduct?.name}"? 
+                Esta ação não pode ser desfeita.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </ERPLayout>
   )
