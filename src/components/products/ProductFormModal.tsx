@@ -4,7 +4,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { toast } from "sonner"
 
 interface Product {
@@ -35,6 +41,31 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
     warranty: product?.warranty || '',
     status: product?.status || 'active' as 'active' | 'inactive'
   })
+
+  const brands = [
+    "Apple", "Samsung", "Xiaomi", "Motorola", "LG", "Sony", "Huawei", 
+    "OnePlus", "Google", "Nokia", "Realme", "Oppo", "Vivo", "Asus", "Outro"
+  ]
+
+  const warrantyPeriods = [
+    { value: "3 meses", label: "3 meses" },
+    { value: "6 meses", label: "6 meses" },
+    { value: "12 meses", label: "12 meses" },
+    { value: "18 meses", label: "18 meses" },
+    { value: "24 meses", label: "24 meses" },
+    { value: "36 meses", label: "36 meses" },
+    { value: "Sem garantia", label: "Sem garantia" }
+  ]
+
+  const stockTypes = [
+    { value: "quantity", label: "Por Quantidade" },
+    { value: "serial", label: "IMEI/SN/Código de Barras" }
+  ]
+
+  const statusOptions = [
+    { value: "active", label: "Ativo" },
+    { value: "inactive", label: "Inativo" }
+  ]
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -103,13 +134,21 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
 
             <div>
               <Label htmlFor="brand">Marca *</Label>
-              <Input
-                id="brand"
+              <Select
                 value={formData.brand}
-                onChange={(e) => setFormData(prev => ({ ...prev, brand: e.target.value }))}
-                placeholder="Ex: Apple"
-                required
-              />
+                onValueChange={(value) => setFormData(prev => ({ ...prev, brand: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a marca" />
+                </SelectTrigger>
+                <SelectContent>
+                  {brands.map((brand) => (
+                    <SelectItem key={brand} value={brand}>
+                      {brand}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -129,33 +168,43 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
 
               <div>
                 <Label htmlFor="warranty">Garantia</Label>
-                <Input
-                  id="warranty"
+                <Select
                   value={formData.warranty}
-                  onChange={(e) => setFormData(prev => ({ ...prev, warranty: e.target.value }))}
-                  placeholder="Ex: 12 meses"
-                />
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, warranty: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a garantia" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {warrantyPeriods.map((warranty) => (
+                      <SelectItem key={warranty.value} value={warranty.value}>
+                        {warranty.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
             <div>
               <Label>Tipo de Controle de Estoque *</Label>
-              <RadioGroup
+              <Select
                 value={formData.stockType}
                 onValueChange={(value: 'quantity' | 'serial') => 
                   setFormData(prev => ({ ...prev, stockType: value }))
                 }
-                className="mt-2"
               >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="quantity" id="quantity" />
-                  <Label htmlFor="quantity">Por Quantidade</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="serial" id="serial" />
-                  <Label htmlFor="serial">IMEI/SN/Código de Barras</Label>
-                </div>
-              </RadioGroup>
+                <SelectTrigger className="mt-2">
+                  <SelectValue placeholder="Selecione o tipo de controle" />
+                </SelectTrigger>
+                <SelectContent>
+                  {stockTypes.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
@@ -172,22 +221,23 @@ export function ProductFormModal({ isOpen, onClose, product, onSave }: ProductFo
 
             <div>
               <Label>Status</Label>
-              <RadioGroup
+              <Select
                 value={formData.status}
                 onValueChange={(value: 'active' | 'inactive') => 
                   setFormData(prev => ({ ...prev, status: value }))
                 }
-                className="mt-2"
               >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="active" id="active" />
-                  <Label htmlFor="active">Ativo</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="inactive" id="inactive" />
-                  <Label htmlFor="inactive">Inativo</Label>
-                </div>
-              </RadioGroup>
+                <SelectTrigger className="mt-2">
+                  <SelectValue placeholder="Selecione o status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {statusOptions.map((status) => (
+                    <SelectItem key={status.value} value={status.value}>
+                      {status.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
