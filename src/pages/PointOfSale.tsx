@@ -1,3 +1,4 @@
+
 import { useState } from "react"
 import { ERPLayout } from "@/components/erp-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -6,6 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Search, Plus, CircleMinus, CirclePlus, CreditCard, DollarSign } from "lucide-react"
+import { SaleFinalizationModal } from "@/components/pos/SaleFinalizationModal"
+import { useToast } from "@/hooks/use-toast"
 
 interface CartItem {
   id: string
@@ -24,6 +27,9 @@ export default function PointOfSale() {
   const [selectedCustomer, setSelectedCustomer] = useState<string>("")
   const [barcodeInput, setBarcodeInput] = useState<string>("")
   const [discount, setDiscount] = useState<number>(0)
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("")
+  const [showFinalizationModal, setShowFinalizationModal] = useState(false)
+  const { toast } = useToast()
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.total, 0)
   const discountAmount = (subtotal * discount) / 100
@@ -53,6 +59,29 @@ export default function PointOfSale() {
     setCartItems(items => items.filter(item => item.id !== id))
   }
 
+  const clearCart = () => {
+    setCartItems([])
+    setSelectedCustomer("")
+    setBarcodeInput("")
+    setDiscount(0)
+    setSelectedPaymentMethod("")
+    toast({
+      title: "Carrinho limpo",
+      description: "Todos os itens foram removidos do carrinho.",
+    })
+  }
+
+  const handlePaymentSelection = (method: string) => {
+    setSelectedPaymentMethod(method)
+    setShowFinalizationModal(true)
+  }
+
+  const handleSaleComplete = () => {
+    // Limpar carrinho após venda finalizada
+    clearCart()
+    setShowFinalizationModal(false)
+  }
+
   return (
     <ERPLayout>
       <div className="space-y-6">
@@ -66,7 +95,7 @@ export default function PointOfSale() {
             <Button variant="outline">
               Histórico
             </Button>
-            <Button variant="destructive">
+            <Button variant="destructive" onClick={clearCart}>
               Limpar Carrinho
             </Button>
           </div>
@@ -263,21 +292,46 @@ export default function PointOfSale() {
                 <CardTitle className="font-title">Finalizar Venda</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button className="w-full btn-primary h-12" disabled={cartItems.length === 0}>
+                <Button 
+                  className="w-full btn-primary h-12" 
+                  disabled={cartItems.length === 0}
+                  onClick={() => handlePaymentSelection("Cartão")}
+                >
                   <CreditCard className="h-4 w-4 mr-2" />
                   Cartão
                 </Button>
-                <Button variant="outline" className="w-full h-12" disabled={cartItems.length === 0}>
+                <Button 
+                  variant="outline" 
+                  className="w-full h-12" 
+                  disabled={cartItems.length === 0}
+                  onClick={() => handlePaymentSelection("Dinheiro")}
+                >
                   <DollarSign className="h-4 w-4 mr-2" />
                   Dinheiro
                 </Button>
-                <Button variant="outline" className="w-full h-12" disabled={cartItems.length === 0}>
+                <Button 
+                  variant="outline" 
+                  className="w-full h-12" 
+                  disabled={cartItems.length === 0}
+                  onClick={() => handlePaymentSelection("Pix")}
+                >
                   Pix
                 </Button>
               </CardContent>
             </Card>
           </div>
         </div>
+
+        {/* Modal de Finalização */}
+        <SaleFinalizationModal
+          isOpen={showFinalizationModal}
+          onClose={handleSaleComplete}
+          cartItems={cartItems}
+          total={total}
+          discount={discount}
+          paymentMethod={selectedPaymentMethod}
+          customer={selectedCustomer}
+        />
       </div>
     </ERPLayout>
   )
